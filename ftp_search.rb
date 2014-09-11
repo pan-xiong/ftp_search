@@ -33,6 +33,10 @@ class FtpSearch
       opts.on('-m STR', '--match STR', 'filename you want to search') do |value|
         options[:match] = value
       end
+
+      opts.on('-l', 'display file detail') do |value|
+        options[:list] = value
+      end
     end.parse!
 
     @server = options[:host]
@@ -40,6 +44,7 @@ class FtpSearch
     @password = options[:password]
     @path = options[:path] || '/'
     @keywords = options[:match]
+    @list = options[:list]
     if @password.nil?
       print "Enter password: "
       @password = STDIN.noecho(&:gets).chomp
@@ -60,7 +65,12 @@ class FtpSearch
         short_name = i.split(' ')[-1]
         full_name = "#{path}/#{short_name}"
         full_name += '/' if i[0].downcase == 'd'
-        puts full_name if short_name.to_s.scan(@keywords).any?
+        full_name = i.sub(/#{short_name}$/, full_name) if @list
+        if @keywords && short_name.to_s.scan(@keywords).any?
+          puts full_name
+        else
+          puts full_name
+        end
       end
       dirs = ftp.ls.select{|i|i[0]=='d'}.map{|j| j.split(' ')[-1]}
       return if dirs.empty?
