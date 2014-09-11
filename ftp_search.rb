@@ -60,7 +60,8 @@ class FtpSearch
 
   def find(ftp, path)
     Net::FTP.open(@server, @user, @password) do |ftp|
-      ftp.chdir(path) unless path.nil?
+      path = path == '/' ? '' : path
+      ftp.chdir(path)
       ftp.ls.each do |i|
         short_name = i.split(' ')[-1]
         full_name = "#{path}/#{short_name}"
@@ -68,14 +69,14 @@ class FtpSearch
         full_name = i.sub(/#{short_name}$/, full_name) if @list
         if @keywords && short_name.to_s.scan(@keywords).any?
           puts full_name
-        else
+        elsif @keywords.nil?
           puts full_name
         end
       end
       dirs = ftp.ls.select{|i|i[0]=='d'}.map{|j| j.split(' ')[-1]}
       return if dirs.empty?
       dirs.each do |dir_name|
-        full_dir = "#{path == '/' ? '' : path}/#{dir_name}"
+        full_dir = "#{path}/#{dir_name}"
         find(nil, full_dir)
       end
     end
